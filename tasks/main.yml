@@ -1,0 +1,46 @@
+---
+- name: Check if we are running supported os
+  ansible.builtin.assert:
+    fail_msg: "{{ role_name }} only supports RHEL"
+    success_msg: "{{ role_name }} supports {{ ansible_distribution }} version {{ ansible_distribution_version }}"
+    quiet: "{{ not ansible_check_mode }}"
+    that:
+      ansible_os_family|lower == "redhat" and ansible_distribution_major_version|int in [7, 8, 9, 10]
+  tags: [nginx, preflight, always]
+
+- name: Install Nginx package
+  ansible.builtin.dnf:
+    name: "{{ nginx_package_name }}"
+    state: present
+  tags: [nginx, install]
+
+- name: Deploy index.html from Jinja2 template
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ nginx_index_path }}"
+    mode: '0644'
+  notify: Restart nginx
+  tags: [nginx, configure]
+
+- name: Configure nginx site
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_conf_dir }}/conf.d/nginx.conf"
+    mode: '0644'
+  notify: Restart nginx
+  tags: [nginx, configure]
+
+- name: Ensure Nginx is started and enabled
+  ansible.builtin.service:
+    name: "{{ nginx_service_name }}"
+    state: started
+    enabled: true
+  tags: [nginx, service]
+
+- name: Collect Nginx info for summary
+  ansible.builtin.command: nginx -v
+  register: nginx_check_v
+  check_mode: false
+  changed_when: false
+  ignore_errors: true
+  tags: [nginx, debug]

@@ -1,0 +1,10 @@
+---
+nginx_listen_port: 80
+nginx_server_name: localhost
+nginx_package_name: nginx
+nginx_service_name: nginx
+nginx_conf_dir: /etc/nginx
+nginx_root: /usr/share/nginx/html
+nginx_index_path: /usr/share/nginx/html/index.html
+nginx_access_log: /var/log/nginx/access.log
+nginx_error_log: /var/log/nginx/error.log
